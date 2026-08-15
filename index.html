@@ -35,22 +35,86 @@
     </section>
 
     <section id="player" class="player-section">
-      <div class="section-title">
-        <div>
-          <span class="eyebrow">MINI VIDEO PLAYER</span>
-          <h2>Train. Play. Repeat.</h2>
-        </div>
-        <button id="miniToggle" class="small-btn">Hide Video</button>
+  <div class="section-title">
+    <div>
+      <span class="eyebrow">AUDIO PLAYER</span>
+      <h2>Train. Play. Repeat.</h2>
+    </div>
+  </div>
+
+  <div class="audio-card">
+
+    <img
+      src="gym-hero.png"
+      class="cover"
+      alt="GYM MUSIC"
+    >
+
+    <div class="audio-info">
+
+      <span class="eyebrow">NOW PLAYING</span>
+
+      <h3 id="songTitle">
+        GYM MUSIC PLAYLIST
+      </h3>
+
+      <div class="status" id="status">
+        READY
       </div>
 
-      <div class="player-layout">
-        <div class="mini-player" id="miniPlayer">
-          <div id="player"></div>
-          <div id="fallback" class="fallback">
-            <strong>GYM MUSIC</strong>
-            <span>Loading your playlist…</span>
-          </div>
-        </div>
+      <div class="controls">
+
+        <button class="circle" id="prevBtn">
+          ⏮
+        </button>
+
+        <button class="circle main" id="playBtn">
+          ▶
+        </button>
+
+        <button class="circle" id="nextBtn">
+          ⏭
+        </button>
+
+      </div>
+
+      <div class="progress">
+
+        <span id="currentTime">0:00</span>
+
+        <input
+          id="seek"
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+        >
+
+        <span id="duration">0:00</span>
+
+      </div>
+
+      <div class="volume">
+
+        <span>🔊</span>
+
+        <input
+          id="volume"
+          type="range"
+          min="0"
+          max="100"
+          value="80"
+        >
+
+      </div>
+
+      <!-- YouTube player stays hidden -->
+      <div id="player" class="hidden"></div>
+
+    </div>
+
+  </div>
+</section>
 
         <div class="now-card">
           <span class="eyebrow">NOW PLAYING</span>
