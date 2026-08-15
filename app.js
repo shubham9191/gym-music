@@ -1,871 +1,833 @@
-const PLAYLIST_ID = "PLe3s0j_-EO8cw2cwsBwzHgJrIZg5e7IGt";
+const PLAYLIST_ID =
+  "PLe3s0j_-EO8cw2cwsBwzHgJrIZg5e7IGt";
 
 let player = null;
 let playerReady = false;
 let tracks = [];
-let playlistTimer = null;
 
 
-/* =========================================
+/* =========================
    YOUTUBE API
-========================================= */
+========================= */
 
 function onYouTubeIframeAPIReady() {
 
-    player = new YT.Player("player", {
+  player = new YT.Player(
+    "youtube-player",
+    {
 
-        width: "1",
-        height: "1",
+      width: "100%",
+      height: "260",
 
-        playerVars: {
-            autoplay: 0,
-            controls: 0,
-            playsinline: 1,
-            rel: 0,
-            modestbranding: 1,
-            listType: "playlist",
-            list: PLAYLIST_ID,
-            origin: window.location.origin
-        },
+      playerVars: {
 
-        events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-            onError: onPlayerError
-        }
+        autoplay: 0,
 
-    });
+        controls: 1,
+
+        playsinline: 1,
+
+        rel: 0,
+
+        listType: "playlist",
+
+        list: PLAYLIST_ID,
+
+        origin: window.location.origin
+
+      },
+
+      events: {
+
+        onReady: onPlayerReady,
+
+        onStateChange: onPlayerStateChange,
+
+        onError: onPlayerError
+
+      }
+
+    }
+  );
 }
 
 
-/* =========================================
+/* =========================
    PLAYER READY
-========================================= */
+========================= */
 
 function onPlayerReady() {
 
-    playerReady = true;
+  playerReady = true;
 
-    player.setVolume(80);
+  player.setVolume(80);
 
-    setStatus("LOADING");
+  setStatus("READY");
 
-    /*
-      Explicitly load the playlist.
-      This is the important fix.
-    */
+  loadPlaylist();
 
-    player.cuePlaylist({
-        listType: "playlist",
-        list: PLAYLIST_ID
-    });
-
-    /*
-      Give YouTube time to load the playlist.
-    */
-
-    waitForPlaylist();
+  updatePlayer();
 
 }
 
 
-/* =========================================
-   WAIT FOR PLAYLIST
-========================================= */
+/* =========================
+   LOAD PLAYLIST
+========================= */
 
-function waitForPlaylist() {
+function loadPlaylist() {
 
-    let attempts = 0;
+  /*
+    Ask YouTube to load your playlist.
+  */
 
-    playlistTimer = setInterval(() => {
+  player.cuePlaylist({
 
-        attempts++;
+    listType: "playlist",
 
-        if (!playerReady) {
-            return;
-        }
+    list: PLAYLIST_ID,
 
-        const playlist = player.getPlaylist();
+    index: 0
 
-        console.log(
-            "YouTube playlist:",
-            playlist
-        );
+  });
 
 
-        if (
-            playlist &&
-            playlist.length > 0
-        ) {
+  /*
+    Wait for YouTube to return
+    the playlist.
+  */
 
-            clearInterval(playlistTimer);
+  setTimeout(() => {
 
-            buildPlaylist(playlist);
-
-            setStatus("READY");
-
-            updateSong();
-
-            return;
-
-        }
+    const ids =
+      player.getPlaylist();
 
 
-        /*
-          Try loading the playlist again
-          if YouTube hasn't returned it.
-        */
+    if (
+      ids &&
+      ids.length > 0
+    ) {
 
-        if (attempts === 5) {
+      tracks =
+        ids.map(
+          (id, index) => ({
 
-            player.cuePlaylist({
-                listType: "playlist",
-                list: PLAYLIST_ID
-            });
-
-        }
-
-
-        /*
-          Stop after 20 attempts.
-        */
-
-        if (attempts >= 20) {
-
-            clearInterval(playlistTimer);
-
-            setStatus("PLAYLIST ERROR");
-
-            document.getElementById(
-                "playlistList"
-            ).innerHTML = `
-
-                <div class="loading">
-
-                    Unable to load the YouTube playlist.
-
-                    <br><br>
-
-                    Please check that the playlist
-                    is Public and allows embedding.
-
-                </div>
-
-            `;
-
-        }
-
-    }, 1000);
-
-}
-
-
-/* =========================================
-   BUILD PLAYLIST
-========================================= */
-
-function buildPlaylist(videoIds) {
-
-    tracks = videoIds.map((videoId, index) => {
-
-        return {
-
-            id: videoId,
+            id: id,
 
             index: index,
 
-            title: "Loading song...",
+            title:
+              "Workout Track " +
+              (index + 1),
 
             thumbnail:
-                "https://i.ytimg.com/vi/" +
-                videoId +
-                "/mqdefault.jpg"
+              "https://i.ytimg.com/vi/" +
+              id +
+              "/mqdefault.jpg"
 
-        };
-
-    });
-
-
-    renderPlaylist();
+          })
+        );
 
 
-    /*
-      Get titles from YouTube.
-    */
+      renderPlaylist();
 
-    loadTitles();
+      updateSong();
+
+    }
+
+    else {
+
+      document.getElementById(
+        "playlistList"
+      ).innerHTML = `
+
+        <div class="loading">
+
+          YouTube playlist could not be loaded.
+
+          <br><br>
+
+          Please make sure the playlist
+          is public.
+
+        </div>
+
+      `;
+
+      setStatus(
+        "PLAYLIST ERROR"
+      );
+
+    }
+
+  }, 2000);
 
 }
 
 
-/* =========================================
-   GET TITLES
-========================================= */
-
-function loadTitles() {
-
-    if (!playerReady) {
-        return;
-    }
-
-
-    const currentIndex =
-        player.getPlaylistIndex();
-
-
-    /*
-      Move through playlist items so
-      YouTube gives us their metadata.
-    */
-
-    if (
-        currentIndex >= 0 &&
-        tracks[currentIndex]
-    ) {
-
-        const data =
-            player.getVideoData();
-
-
-        if (
-            data &&
-            data.title
-        ) {
-
-            tracks[currentIndex].title =
-                data.title;
-
-            renderPlaylist();
-
-        }
-
-    }
-
-}
-
-
-/* =========================================
+/* =========================
    PLAYER STATE
-========================================= */
+========================= */
 
 function onPlayerStateChange(event) {
 
-    const playButton =
-        document.getElementById("playBtn");
+  const button =
+    document.getElementById(
+      "playBtn"
+    );
 
 
-    if (
-        event.data ===
-        YT.PlayerState.PLAYING
-    ) {
+  if (
+    event.data ===
+    YT.PlayerState.PLAYING
+  ) {
 
-        playButton.textContent = "⏸";
+    button.textContent = "⏸";
 
-        setStatus("PLAYING");
+    setStatus("PLAYING");
 
-    }
-
-
-    else if (
-        event.data ===
-        YT.PlayerState.PAUSED
-    ) {
-
-        playButton.textContent = "▶";
-
-        setStatus("PAUSED");
-
-    }
+  }
 
 
-    else if (
-        event.data ===
-        YT.PlayerState.BUFFERING
-    ) {
+  else if (
+    event.data ===
+    YT.PlayerState.PAUSED
+  ) {
 
-        setStatus("BUFFERING");
+    button.textContent = "▶";
 
-    }
+    setStatus("PAUSED");
 
-
-    else if (
-        event.data ===
-        YT.PlayerState.ENDED
-    ) {
-
-        playButton.textContent = "▶";
-
-        setStatus("ENDED");
-
-    }
+  }
 
 
-    updateSong();
+  else if (
+    event.data ===
+    YT.PlayerState.BUFFERING
+  ) {
 
-    highlightCurrentSong();
+    setStatus("BUFFERING");
+
+  }
+
+
+  else if (
+    event.data ===
+    YT.PlayerState.ENDED
+  ) {
+
+    button.textContent = "▶";
+
+    setStatus("ENDED");
+
+  }
+
+
+  updateSong();
+
+  highlightCurrent();
 
 }
 
 
-/* =========================================
+/* =========================
    ERROR
-========================================= */
+========================= */
 
 function onPlayerError(event) {
 
-    console.log(
-        "YouTube error:",
-        event.data
-    );
+  console.log(
+    "YouTube error:",
+    event.data
+  );
 
-    setStatus("YOUTUBE ERROR");
+  setStatus(
+    "YOUTUBE ERROR " +
+    event.data
+  );
 
 }
 
 
-/* =========================================
-   CURRENT SONG
-========================================= */
+/* =========================
+   UPDATE SONG
+========================= */
 
 function updateSong() {
 
-    if (!playerReady) {
-        return;
-    }
+  if (!playerReady) {
+    return;
+  }
 
 
-    const data =
-        player.getVideoData();
+  const data =
+    player.getVideoData();
+
+
+  if (
+    data &&
+    data.title
+  ) {
+
+    document.getElementById(
+      "songTitle"
+    ).textContent =
+      data.title;
+
+
+    const index =
+      player.getPlaylistIndex();
 
 
     if (
-        data &&
-        data.title
+      tracks[index]
     ) {
 
-        document.getElementById(
-            "songTitle"
-        ).textContent =
-            data.title;
+      tracks[index].title =
+        data.title;
 
-
-        const index =
-            player.getPlaylistIndex();
-
-
-        if (
-            tracks[index]
-        ) {
-
-            tracks[index].title =
-                data.title;
-
-            renderPlaylist();
-
-        }
+      renderPlaylist();
 
     }
 
+  }
 
-    highlightCurrentSong();
+
+  highlightCurrent();
 
 }
 
 
-/* =========================================
-   UPDATE PROGRESS
-========================================= */
+/* =========================
+   UPDATE PLAYER
+========================= */
 
 function updatePlayer() {
 
-    if (!playerReady) {
-        return;
-    }
+  if (!playerReady) {
+    return;
+  }
 
 
-    const current =
-        player.getCurrentTime() || 0;
+  const current =
+    player.getCurrentTime();
 
 
-    const duration =
-        player.getDuration() || 0;
+  const duration =
+    player.getDuration();
 
+
+  document.getElementById(
+    "currentTime"
+  ).textContent =
+    formatTime(current);
+
+
+  document.getElementById(
+    "duration"
+  ).textContent =
+    formatTime(duration);
+
+
+  if (
+    duration > 0
+  ) {
 
     document.getElementById(
-        "currentTime"
-    ).textContent =
-        formatTime(current);
+      "seek"
+    ).value =
+      (
+        current /
+        duration
+      ) * 100;
 
-
-    document.getElementById(
-        "duration"
-    ).textContent =
-        formatTime(duration);
-
-
-    if (duration > 0) {
-
-        document.getElementById(
-            "seek"
-        ).value =
-            (current / duration) * 100;
-
-    }
-
-
-    updateSong();
+  }
 
 }
 
 
-/* =========================================
+/* =========================
    TIMER
-========================================= */
+========================= */
 
 setInterval(
-    updatePlayer,
-    500
+  updatePlayer,
+  500
 );
 
 
-/* =========================================
-   TIME FORMAT
-========================================= */
+/* =========================
+   FORMAT TIME
+========================= */
 
 function formatTime(seconds) {
 
-    if (
-        !isFinite(seconds)
-    ) {
+  if (
+    !isFinite(seconds)
+  ) {
 
-        return "0:00";
+    return "0:00";
 
-    }
-
-
-    const minutes =
-        Math.floor(seconds / 60);
+  }
 
 
-    const secs =
-        Math.floor(seconds % 60)
-            .toString()
-            .padStart(2, "0");
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
 
 
-    return minutes + ":" + secs;
+  const secondsPart =
+    Math.floor(
+      seconds % 60
+    )
+      .toString()
+      .padStart(2, "0");
+
+
+  return (
+    minutes +
+    ":" +
+    secondsPart
+  );
 
 }
 
 
-/* =========================================
+/* =========================
    STATUS
-========================================= */
+========================= */
 
 function setStatus(text) {
 
-    const element =
-        document.getElementById("status");
+  const element =
+    document.getElementById(
+      "status"
+    );
 
 
-    if (element) {
+  if (element) {
 
-        element.textContent =
-            text;
+    element.textContent =
+      text;
 
-    }
+  }
 
 }
 
 
-/* =========================================
+/* =========================
    PLAYLIST UI
-========================================= */
+========================= */
 
 function renderPlaylist(
-    search = ""
+  search = ""
 ) {
 
-    const container =
-        document.getElementById(
-            "playlistList"
-        );
+  const container =
+    document.getElementById(
+      "playlistList"
+    );
 
 
-    if (!tracks.length) {
+  if (
+    tracks.length === 0
+  ) {
 
-        container.innerHTML = `
-            <div class="loading">
-                Loading playlist...
-            </div>
-        `;
+    container.innerHTML = `
 
-        return;
+      <div class="loading">
+        Loading playlist...
+      </div>
 
-    }
+    `;
 
+    return;
 
-    const query =
-        search.toLowerCase();
-
-
-    const filtered =
-        tracks.filter(song =>
-
-            song.title
-                .toLowerCase()
-                .includes(query)
-
-        );
+  }
 
 
-    if (!filtered.length) {
-
-        container.innerHTML = `
-            <div class="loading">
-                No songs found.
-            </div>
-        `;
-
-        return;
-
-    }
+  const query =
+    search.toLowerCase();
 
 
-    container.innerHTML =
-        filtered.map(song => `
-
-            <div
-                class="track"
-                data-index="${song.index}"
-            >
-
-                <div class="track-number">
-
-                    ${String(
-                        song.index + 1
-                    ).padStart(2, "0")}
-
-                </div>
+  const filtered =
+    tracks.filter(
+      song =>
+        song.title
+          .toLowerCase()
+          .includes(query)
+    );
 
 
-                <img
-                    class="thumb"
-                    src="${song.thumbnail}"
-                    alt=""
-                >
+  if (
+    filtered.length === 0
+  ) {
+
+    container.innerHTML = `
+
+      <div class="loading">
+        No songs found.
+      </div>
+
+    `;
+
+    return;
+
+  }
 
 
-                <div class="track-info">
+  container.innerHTML =
+    filtered
+      .map(
+        song => `
 
-                    <div class="track-title">
+        <div
+          class="track"
+          data-index="${song.index}"
+        >
 
-                        ${escapeHTML(
-                            song.title
-                        )}
+          <div class="track-number">
 
-                    </div>
+            ${String(
+              song.index + 1
+            ).padStart(2, "0")}
 
-
-                    <div class="track-meta">
-
-                        GYM MUSIC • YouTube
-
-                    </div>
-
-                </div>
+          </div>
 
 
-                <div class="track-play">
-                    ▶
-                </div>
+          <img
+            class="thumb"
+            src="${song.thumbnail}"
+            alt=""
+          >
+
+
+          <div class="track-info">
+
+            <div class="track-title">
+
+              ${escapeHTML(
+                song.title
+              )}
 
             </div>
 
-        `).join("");
+            <div class="track-meta">
+
+              YouTube • GYM MUSIC
+
+            </div>
+
+          </div>
 
 
-    document
-        .querySelectorAll(".track")
-        .forEach(track => {
+          <div class="track-play">
 
-            track.addEventListener(
-                "click",
-                function() {
+            ▶
 
-                    const index =
-                        Number(
-                            this.dataset.index
-                        );
+          </div>
 
+        </div>
 
-                    playSong(index);
-
-                }
-            );
-
-        });
+      `
+      )
+      .join("");
 
 
-    highlightCurrentSong();
+  document
+    .querySelectorAll(
+      ".track"
+    )
+    .forEach(
+      element => {
 
-}
-
-
-/* =========================================
-   PLAY SONG
-========================================= */
-
-function playSong(index) {
-
-    if (!playerReady) {
-        return;
-    }
-
-
-    player.playVideoAt(index);
-
-
-    setTimeout(() => {
-
-        updateSong();
-
-        highlightCurrentSong();
-
-    }, 700);
-
-}
-
-
-/* =========================================
-   HIGHLIGHT
-========================================= */
-
-function highlightCurrentSong() {
-
-    if (!playerReady) {
-        return;
-    }
-
-
-    const current =
-        player.getPlaylistIndex();
-
-
-    document
-        .querySelectorAll(".track")
-        .forEach(track => {
+        element.addEventListener(
+          "click",
+          () => {
 
             const index =
-                Number(
-                    track.dataset.index
-                );
+              Number(
+                element.dataset.index
+              );
 
 
-            track.classList.toggle(
-                "active",
-                index === current
+            player.playVideoAt(
+              index
             );
 
-        });
+          }
+        );
+
+      }
+    );
+
+
+  highlightCurrent();
 
 }
 
 
-/* =========================================
+/* =========================
+   HIGHLIGHT CURRENT
+========================= */
+
+function highlightCurrent() {
+
+  if (!playerReady) {
+    return;
+  }
+
+
+  const current =
+    player.getPlaylistIndex();
+
+
+  document
+    .querySelectorAll(
+      ".track"
+    )
+    .forEach(
+      element => {
+
+        const index =
+          Number(
+            element.dataset.index
+          );
+
+
+        element.classList.toggle(
+          "active",
+          index === current
+        );
+
+      }
+    );
+
+}
+
+
+/* =========================
    PLAY / PAUSE
-========================================= */
+========================= */
 
 document
-    .getElementById("playBtn")
-    .addEventListener(
-        "click",
-        function() {
+  .getElementById(
+    "playBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
 
-            if (!playerReady) {
-                return;
-            }
-
-
-            const state =
-                player.getPlayerState();
+      if (!playerReady) {
+        return;
+      }
 
 
-            if (
-                state ===
-                YT.PlayerState.PLAYING
-            ) {
-
-                player.pauseVideo();
-
-            }
-
-            else {
-
-                player.playVideo();
-
-            }
-
-        }
-    );
+      const state =
+        player.getPlayerState();
 
 
-/* =========================================
+      if (
+        state ===
+        YT.PlayerState.PLAYING
+      ) {
+
+        player.pauseVideo();
+
+      }
+
+      else {
+
+        player.playVideo();
+
+      }
+
+    }
+  );
+
+
+/* =========================
    PREVIOUS
-========================================= */
+========================= */
 
 document
-    .getElementById("prevBtn")
-    .addEventListener(
-        "click",
-        function() {
+  .getElementById(
+    "prevBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
 
-            if (playerReady) {
+      if (playerReady) {
 
-                player.previousVideo();
+        player.previousVideo();
 
-            }
+      }
 
-        }
-    );
+    }
+  );
 
 
-/* =========================================
+/* =========================
    NEXT
-========================================= */
+========================= */
 
 document
-    .getElementById("nextBtn")
-    .addEventListener(
-        "click",
-        function() {
+  .getElementById(
+    "nextBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
 
-            if (playerReady) {
+      if (playerReady) {
 
-                player.nextVideo();
+        player.nextVideo();
 
-            }
+      }
 
-        }
-    );
+    }
+  );
 
 
-/* =========================================
+/* =========================
    SEEK
-========================================= */
+========================= */
 
 document
-    .getElementById("seek")
-    .addEventListener(
-        "input",
-        function() {
+  .getElementById(
+    "seek"
+  )
+  .addEventListener(
+    "input",
+    event => {
 
-            if (!playerReady) {
-                return;
-            }
-
-
-            const duration =
-                player.getDuration();
+      if (!playerReady) {
+        return;
+      }
 
 
-            player.seekTo(
-                duration *
-                Number(this.value) /
-                100,
-                true
-            );
-
-        }
-    );
+      const duration =
+        player.getDuration();
 
 
-/* =========================================
+      player.seekTo(
+
+        duration *
+        Number(
+          event.target.value
+        ) /
+        100,
+
+        true
+
+      );
+
+    }
+  );
+
+
+/* =========================
    VOLUME
-========================================= */
+========================= */
 
 document
-    .getElementById("volume")
-    .addEventListener(
-        "input",
-        function() {
+  .getElementById(
+    "volume"
+  )
+  .addEventListener(
+    "input",
+    event => {
 
-            if (playerReady) {
+      if (playerReady) {
 
-                player.setVolume(
-                    Number(this.value)
-                );
+        player.setVolume(
+          Number(
+            event.target.value
+          )
+        );
 
-            }
+      }
 
-        }
-    );
+    }
+  );
 
 
-/* =========================================
+/* =========================
    SEARCH
-========================================= */
+========================= */
 
 document
-    .getElementById("search")
-    .addEventListener(
-        "input",
-        function() {
+  .getElementById(
+    "search"
+  )
+  .addEventListener(
+    "input",
+    event => {
 
-            renderPlaylist(
-                this.value
-            );
+      renderPlaylist(
+        event.target.value
+      );
 
-        }
-    );
+    }
+  );
 
 
-/* =========================================
+/* =========================
    HERO BUTTON
-========================================= */
+========================= */
 
 document
-    .getElementById("heroPlay")
-    .addEventListener(
-        "click",
-        function() {
+  .getElementById(
+    "heroPlay"
+  )
+  .addEventListener(
+    "click",
+    () => {
 
-            document
-                .getElementById("player")
-                .scrollIntoView({
-                    behavior: "smooth"
-                });
+      document
+        .getElementById(
+          "player"
+        )
+        .scrollIntoView({
+          behavior: "smooth"
+        });
 
-        }
-    );
+    }
+  );
 
 
-/* =========================================
+/* =========================
    HTML ESCAPE
-========================================= */
+========================= */
 
 function escapeHTML(text) {
 
-    return text.replace(
-        /[&<>"']/g,
-        function(character) {
+  return text.replace(
+    /[&<>"']/g,
+    character => {
 
-            const entities = {
+      const entities = {
 
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;"
+        "&": "&amp;",
 
-            };
+        "<": "&lt;",
+
+        ">": "&gt;",
+
+        '"': "&quot;",
+
+        "'": "&#39;"
+
+      };
 
 
-            return entities[
-                character
-            ];
+      return entities[
+        character
+      ];
 
-        }
-    );
+    }
+  );
 
 }
