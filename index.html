@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GYM MUSIC</title>
+  <meta name="description" content="Ultimate Gym Music — pump up your workout." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#">
+      <span class="brand-mark">🏋️</span>
+      <span>GYM MUSIC</span>
+    </a>
+    <nav>
+      <a href="#player">Player</a>
+      <a href="#playlist">Playlist</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <img src="gym-hero.png" alt="Gym Music" class="hero-image" />
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <span class="badge">WORKOUT • MUSIC • ENERGY</span>
+        <h1>ULTIMATE<br><span>GYM MUSIC</span></h1>
+        <p>Pump up your workout. Unleash your potential.</p>
+        <div class="hero-actions">
+          <button class="primary" id="heroPlay">▶ Listen Now</button>
+          <a class="secondary" href="#playlist">☰ View Playlist</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="player" class="player-section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">AUDIO PLAYER</span>
+          <h2>Train. Play. Repeat.</h2>
+        </div>
+      </div>
+      <div class="audio-card">
+        <img src="gym-hero.png" class="cover" alt="GYM MUSIC cover">
+        <div class="audio-info">
+          <span class="eyebrow">NOW PLAYING</span>
+          <h3 id="songTitle">GYM MUSIC PLAYLIST</h3>
+          <div class="status" id="status">READY</div>
+          <div class="controls">
+            <button class="circle" id="prevBtn">⏮</button>
+            <button class="circle main" id="playBtn">▶</button>
+            <button class="circle" id="nextBtn">⏭</button>
+          </div>
+          <div class="progress">
+            <span id="currentTime">0:00</span>
+            <input id="seek" type="range" min="0" max="100" value="0">
+            <span id="duration">0:00</span>
+          </div>
+          <div class="volume">
+            <span>🔊</span>
+            <input id="volume" type="range" min="0" max="100" value="80">
+          </div>
+          <div id="player" class="hidden"></div>
+          <div id="fallback" class="hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="playlist" class="playlist-section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">BEAST PLAYLISTS</span>
+          <h2>Your Workout Playlist</h2>
+        </div>
+        <input id="search" class="search" placeholder="Search songs…">
+      </div>
+      <div id="playlistList" class="playlist-list">
+        <div class="loading">Loading playlist…</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>GYM MUSIC • Built for your next PR</footer>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="app.js"></script>
+</body>
+</html>
