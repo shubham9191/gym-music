@@ -1,78 +1,619 @@
-const PLAYLIST_ID="PLe3s0j_-EO8cw2cwsBwzHgJrIZg5e7IGt";
-let player, ready=false, tracks=[], timer;
+const PLAYLIST_ID = "PLe3s0j_-EO8cw2cwsBwzHgJrIZg5e7IGt";
 
-function onYouTubeIframeAPIReady(){
-  player=new YT.Player("player",{
-    width:"1",height:"1",
-    playerVars:{listType:"playlist",list:PLAYLIST_ID,playsinline:1,rel:0,modestbranding:1},
-    events:{onReady:onReady,onStateChange:onStateChange,onError:()=>status("YOUTUBE ERROR")}
-  });
-}
-function onReady(){
-  ready=true;
-  document.getElementById("fallback").classList.add("hidden");
-  player.setVolume(80);
-  status("READY");
-  setTimeout(loadTracks,900);
-  timer=setInterval(update,500);
-}
-function loadTracks(){
-  const ids=player.getPlaylist()||[];
-  tracks=ids.map((id,i)=>({id,title:`Track ${i+1}`,thumb:`https://i.ytimg.com/vi/${id}/mqdefault.jpg`}));
-  render();
-}
-function onStateChange(e){
-  const b=document.getElementById("playBtn");
-  if(e.data===YT.PlayerState.PLAYING){b.textContent="⏸";status("PLAYING")}
-  else if(e.data===YT.PlayerState.PAUSED){b.textContent="▶";status("PAUSED")}
-  else if(e.data===YT.PlayerState.ENDED){b.textContent="▶";status("ENDED")}
-  updateTitle();active();
-}
-function status(t){document.getElementById("status").textContent=t}
-function fmt(s){if(!isFinite(s))return"0:00";return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")}
-function update(){
-  if(!ready)return;
-  const d=player.getDuration()||0,c=player.getCurrentTime()||0;
-  document.getElementById("currentTime").textContent=fmt(c);
-  document.getElementById("duration").textContent=fmt(d);
-  document.getElementById("seek").value=d?c/d*100:0;
-  updateTitle();
-}
-function updateTitle(){
-  if(!ready)return;
-  const data=player.getVideoData?player.getVideoData():{};
-  document.getElementById("songTitle").textContent=data.title||"GYM MUSIC PLAYLIST";
-}
-function active(){
-  if(!ready)return;
-  const i=player.getPlaylistIndex?player.getPlaylistIndex():0;
-  document.querySelectorAll(".track").forEach((el)=>el.classList.toggle("active",Number(el.dataset.index)===i));
-}
-function render(filter=""){
-  const q=filter.toLowerCase(), box=document.getElementById("playlistList");
-  const list=tracks.map((t,i)=>({...t,i})).filter(t=>t.title.toLowerCase().includes(q));
-  if(!list.length){box.innerHTML='<div class="loading">No matching songs.</div>';return}
-  box.innerHTML=list.map(t=>`<div class="track" data-index="${t.i}">
-    <div class="track-number">${String(t.i+1).padStart(2,"0")}</div>
-    <img class="thumb" src="${t.thumb}" alt="">
-    <div class="track-info"><div class="track-title">${esc(t.title)}</div><div class="track-meta">YouTube • GYM MUSIC</div></div>
-    <div class="track-play">▶</div>
-  </div>`).join("");
-  box.querySelectorAll(".track").forEach(el=>el.onclick=()=>{player.playVideoAt(Number(el.dataset.index));active()});
-}
-function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+let player;
+let playerReady = false;
+let tracks = [];
+let timer = null;
 
-document.getElementById("playBtn").onclick=()=>{
-  if(!ready)return;
-  player.getPlayerState()===YT.PlayerState.PLAYING?player.pauseVideo():player.playVideo();
-};
-document.getElementById("prevBtn").onclick=()=>ready&&player.previousVideo();
-document.getElementById("nextBtn").onclick=()=>ready&&player.nextVideo();
-document.getElementById("seek").oninput=e=>{if(ready)player.seekTo((player.getDuration()||0)*e.target.value/100,true)};
-document.getElementById("volume").oninput=e=>{if(ready)player.setVolume(Number(e.target.value))};
-document.getElementById("search").oninput=e=>render(e.target.value);
-document.getElementById("heroPlay").onclick=()=>document.getElementById("player").scrollIntoView({behavior:"smooth"});
-document.getElementById("miniToggle").onclick=()=>{
-  const el=document.getElementById("miniPlayer"),b=document.getElementById("miniToggle");
-  el.classList.toggle("hidden"); b.textContent=el.classList.contains("hidden")?"Show Video":"Hide Video";
-};
+
+/* ==============================
+   YOUTUBE PLAYER
+   ============================== */
+
+function onYouTubeIframeAPIReady() {
+
+    player = new YT.Player("player", {
+
+        width: "1",
+        height: "1",
+
+        playerVars: {
+            listType: "playlist",
+            list: PLAYLIST_ID,
+            playsinline: 1,
+            rel: 0,
+            modestbranding: 1
+        },
+
+        events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+            onError: onPlayerError
+        }
+
+    });
+
+}
+
+
+/* ==============================
+   PLAYER READY
+   ============================== */
+
+function onPlayerReady() {
+
+    playerReady = true;
+
+    player.setVolume(80);
+
+    setStatus("READY");
+
+    loadPlaylist();
+
+    timer = setInterval(updatePlayer, 500);
+
+}
+
+
+/* ==============================
+   LOAD PLAYLIST
+   ============================== */
+
+function loadPlaylist() {
+
+    setTimeout(() => {
+
+        const playlist = player.getPlaylist();
+
+        if (!playlist || playlist.length === 0) {
+
+            document.getElementById("playlistList").innerHTML =
+                `<div class="loading">
+                    Unable to load playlist.
+                    <br>
+                    Please refresh the page.
+                </div>`;
+
+            return;
+
+        }
+
+        tracks = playlist.map((videoId, index) => {
+
+            return {
+                id: videoId,
+                title: "Loading song...",
+                index: index,
+                thumbnail:
+                    `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
+            };
+
+        });
+
+        renderPlaylist();
+
+        getFirstSongTitle();
+
+    }, 1000);
+
+}
+
+
+/* ==============================
+   GET CURRENT SONG
+   ============================== */
+
+function getFirstSongTitle() {
+
+    if (!playerReady) return;
+
+    const data = player.getVideoData();
+
+    if (data && data.title) {
+
+        document.getElementById("songTitle").textContent =
+            data.title;
+
+        if (tracks.length > 0) {
+
+            tracks[0].title = data.title;
+
+            renderPlaylist();
+
+        }
+
+    }
+
+}
+
+
+/* ==============================
+   PLAYER STATE
+   ============================== */
+
+function onPlayerStateChange(event) {
+
+    const playButton =
+        document.getElementById("playBtn");
+
+
+    if (event.data === YT.PlayerState.PLAYING) {
+
+        playButton.textContent = "⏸";
+
+        setStatus("PLAYING");
+
+    }
+
+
+    else if (event.data === YT.PlayerState.PAUSED) {
+
+        playButton.textContent = "▶";
+
+        setStatus("PAUSED");
+
+    }
+
+
+    else if (event.data === YT.PlayerState.ENDED) {
+
+        playButton.textContent = "▶";
+
+        setStatus("ENDED");
+
+    }
+
+
+    updateSong();
+
+    highlightCurrentSong();
+
+}
+
+
+/* ==============================
+   PLAYER ERROR
+   ============================== */
+
+function onPlayerError() {
+
+    setStatus("YOUTUBE ERROR");
+
+}
+
+
+/* ==============================
+   SONG INFORMATION
+   ============================== */
+
+function updateSong() {
+
+    if (!playerReady) return;
+
+    const data = player.getVideoData();
+
+    if (!data) return;
+
+    if (data.title) {
+
+        document.getElementById("songTitle").textContent =
+            data.title;
+
+        const index = player.getPlaylistIndex();
+
+        if (
+            index >= 0 &&
+            tracks[index]
+        ) {
+
+            tracks[index].title = data.title;
+
+            renderPlaylist();
+
+        }
+
+    }
+
+}
+
+
+/* ==============================
+   UPDATE PLAYER
+   ============================== */
+
+function updatePlayer() {
+
+    if (!playerReady) return;
+
+    const current =
+        player.getCurrentTime() || 0;
+
+    const duration =
+        player.getDuration() || 0;
+
+
+    document.getElementById("currentTime").textContent =
+        formatTime(current);
+
+
+    document.getElementById("duration").textContent =
+        formatTime(duration);
+
+
+    if (duration > 0) {
+
+        document.getElementById("seek").value =
+            (current / duration) * 100;
+
+    }
+
+
+    updateSong();
+
+    highlightCurrentSong();
+
+}
+
+
+/* ==============================
+   FORMAT TIME
+   ============================== */
+
+function formatTime(seconds) {
+
+    if (!isFinite(seconds)) {
+
+        return "0:00";
+
+    }
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const secs =
+        Math.floor(seconds % 60)
+            .toString()
+            .padStart(2, "0");
+
+    return `${minutes}:${secs}`;
+
+}
+
+
+/* ==============================
+   STATUS
+   ============================== */
+
+function setStatus(text) {
+
+    const status =
+        document.getElementById("status");
+
+    if (status) {
+
+        status.textContent = text;
+
+    }
+
+}
+
+
+/* ==============================
+   PLAYLIST UI
+   ============================== */
+
+function renderPlaylist(search = "") {
+
+    const container =
+        document.getElementById("playlistList");
+
+    const query =
+        search.toLowerCase();
+
+
+    const filtered =
+        tracks.filter(song =>
+            song.title
+                .toLowerCase()
+                .includes(query)
+        );
+
+
+    if (filtered.length === 0) {
+
+        container.innerHTML =
+            `<div class="loading">
+                No songs found.
+            </div>`;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        filtered.map(song => {
+
+            return `
+
+                <div
+                    class="track"
+                    data-index="${song.index}"
+                >
+
+                    <div class="track-number">
+                        ${String(song.index + 1).padStart(2, "0")}
+                    </div>
+
+
+                    <img
+                        class="thumb"
+                        src="${song.thumbnail}"
+                        alt=""
+                    >
+
+
+                    <div class="track-info">
+
+                        <div class="track-title">
+                            ${escapeHTML(song.title)}
+                        </div>
+
+                        <div class="track-meta">
+                            GYM MUSIC • YouTube
+                        </div>
+
+                    </div>
+
+
+                    <div class="track-play">
+                        ▶
+                    </div>
+
+                </div>
+
+            `;
+
+        }).join("");
+
+
+    document
+        .querySelectorAll(".track")
+        .forEach(track => {
+
+            track.addEventListener(
+                "click",
+                () => {
+
+                    const index =
+                        Number(track.dataset.index);
+
+                    playSong(index);
+
+                }
+            );
+
+        });
+
+
+    highlightCurrentSong();
+
+}
+
+
+/* ==============================
+   PLAY SONG
+   ============================== */
+
+function playSong(index) {
+
+    if (!playerReady) return;
+
+    player.playVideoAt(index);
+
+    setTimeout(() => {
+
+        updateSong();
+
+        highlightCurrentSong();
+
+    }, 500);
+
+}
+
+
+/* ==============================
+   HIGHLIGHT SONG
+   ============================== */
+
+function highlightCurrentSong() {
+
+    if (!playerReady) return;
+
+    const current =
+        player.getPlaylistIndex();
+
+
+    document
+        .querySelectorAll(".track")
+        .forEach(track => {
+
+            const index =
+                Number(track.dataset.index);
+
+            track.classList.toggle(
+                "active",
+                index === current
+            );
+
+        });
+
+}
+
+
+/* ==============================
+   PLAY / PAUSE
+   ============================== */
+
+document
+    .getElementById("playBtn")
+    .addEventListener("click", () => {
+
+        if (!playerReady) return;
+
+
+        const state =
+            player.getPlayerState();
+
+
+        if (
+            state ===
+            YT.PlayerState.PLAYING
+        ) {
+
+            player.pauseVideo();
+
+        } else {
+
+            player.playVideo();
+
+        }
+
+    });
+
+
+/* ==============================
+   PREVIOUS
+   ============================== */
+
+document
+    .getElementById("prevBtn")
+    .addEventListener("click", () => {
+
+        if (playerReady) {
+
+            player.previousVideo();
+
+        }
+
+    });
+
+
+/* ==============================
+   NEXT
+   ============================== */
+
+document
+    .getElementById("nextBtn")
+    .addEventListener("click", () => {
+
+        if (playerReady) {
+
+            player.nextVideo();
+
+        }
+
+    });
+
+
+/* ==============================
+   PROGRESS BAR
+   ============================== */
+
+document
+    .getElementById("seek")
+    .addEventListener("input", event => {
+
+        if (!playerReady) return;
+
+        const duration =
+            player.getDuration();
+
+
+        player.seekTo(
+            duration *
+            Number(event.target.value) /
+            100,
+            true
+        );
+
+    });
+
+
+/* ==============================
+   VOLUME
+   ============================== */
+
+document
+    .getElementById("volume")
+    .addEventListener("input", event => {
+
+        if (playerReady) {
+
+            player.setVolume(
+                Number(event.target.value)
+            );
+
+        }
+
+    });
+
+
+/* ==============================
+   SEARCH
+   ============================== */
+
+document
+    .getElementById("search")
+    .addEventListener("input", event => {
+
+        renderPlaylist(
+            event.target.value
+        );
+
+    });
+
+
+/* ==============================
+   HERO BUTTON
+   ============================== */
+
+document
+    .getElementById("heroPlay")
+    .addEventListener("click", () => {
+
+        document
+            .getElementById("player")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+    });
+
+
+/* ==============================
+   HTML SECURITY
+   ============================== */
+
+function escapeHTML(text) {
+
+    return text.replace(
+        /[&<>"']/g,
+        character => {
+
+            const entities = {
+
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+
+            };
+
+            return entities[character];
+
+        }
+    );
+
+}
