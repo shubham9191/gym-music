@@ -1,83 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>GYM MUSIC</title>
-  <link rel="stylesheet" href="style.css">
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
+
 
 <body>
 
-<header class="navbar">
 
-  <div class="logo">
-    🏋️ GYM MUSIC
-  </div>
+  <!-- =========================
+       NAVIGATION
+  ========================== -->
 
-  <nav>
-    <a href="#player">Player</a>
-    <a href="#playlist">Playlist</a>
-  </nav>
+  <header class="navbar">
 
-</header>
-
-
-<main>
-
-  <!-- HERO -->
-
-  <section class="hero">
-
-    <img
-      src="gym-hero.png"
-      class="hero-image"
-      alt="Gym Music"
-    >
-
-    <div class="hero-overlay"></div>
-
-    <div class="hero-content">
-
-      <div class="badge">
-        WORKOUT • MUSIC • ENERGY
-      </div>
-
-      <h1>
-        ULTIMATE<br>
-        <span>GYM MUSIC</span>
-      </h1>
-
-      <p>
-        Pump up your workout. Unleash your potential.
-      </p>
-
-      <button
-        class="listen-btn"
-        id="heroPlay"
-      >
-        ▶ Listen Now
-      </button>
-
+    <div class="logo">
+      🏋️ GYM MUSIC
     </div>
 
-  </section>
+
+    <nav>
+
+      <a href="#player">
+        Player
+      </a>
+
+    </nav>
+
+  </header>
 
 
-  <!-- PLAYER -->
 
-  <section
-    id="player"
-    class="player-section"
-  >
+  <!-- =========================
+       MAIN
+  ========================== -->
 
-    <div class="section-heading">
+  <main>
 
-      <div>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+      <img
+        src="gym-hero.png"
+        class="hero-image"
+        alt="GYM MUSIC"
+      >
+
+
+      <div class="hero-overlay"></div>
+
+
+      <div class="hero-content">
+
+        <div class="badge">
+          WORKOUT • MUSIC • ENERGY
+        </div>
+
+
+        <h1>
+          GYM<br>
+          <span>MUSIC</span>
+        </h1>
+
+
+        <p>
+          Pump up your workout.
+          Unleash your potential.
+        </p>
+
+
+        <button
+          class="listen-btn"
+          id="heroPlay"
+        >
+
+          ▶ Listen Now
+
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         MUSIC PLAYER
+    ========================== -->
+
+    <section
+      id="player"
+      class="player-section"
+    >
+
+
+      <div class="section-heading">
 
         <span class="eyebrow">
           GYM PLAYER
         </span>
+
 
         <h2>
           Train. Play. Repeat.
@@ -85,172 +122,172 @@
 
       </div>
 
-    </div>
 
 
-    <div class="player-card">
+      <div class="player-card">
 
 
-      <!-- YouTube Player -->
+        <!-- YouTube Music Player -->
 
-      <div class="youtube-box">
+        <div class="youtube-box">
 
-        <div id="youtube-player"></div>
+          <div id="youtube-player"></div>
 
-      </div>
+        </div>
 
 
-      <!-- Custom Controls -->
 
-      <div class="music-controls">
+        <!-- PLAYER CONTROLS -->
 
-        <div class="now-playing">
+        <div class="music-controls">
 
-          <span class="eyebrow">
-            NOW PLAYING
-          </span>
 
-          <h3 id="songTitle">
-            GYM MUSIC
-          </h3>
+          <div class="now-playing">
 
-          <div
-            id="status"
-            class="status"
-          >
-            LOADING
+            <span class="eyebrow">
+              NOW PLAYING
+            </span>
+
+
+            <h3 id="songTitle">
+              GYM MUSIC
+            </h3>
+
+
+            <div
+              id="status"
+              class="status"
+            >
+              LOADING
+            </div>
+
           </div>
 
-        </div>
 
 
-        <div class="buttons">
+          <!-- CONTROL BUTTONS -->
 
-          <button
-            id="prevBtn"
-            class="control"
-          >
-            ⏮
-          </button>
+          <div class="buttons">
 
 
-          <button
-            id="playBtn"
-            class="control play"
-          >
-            ▶
-          </button>
+            <button
+              id="prevBtn"
+              class="control"
+              title="Previous Song"
+            >
+
+              ⏮
+
+            </button>
 
 
-          <button
-            id="nextBtn"
-            class="control"
-          >
-            ⏭
-          </button>
 
-        </div>
+            <button
+              id="playBtn"
+              class="control play"
+              title="Play / Pause"
+            >
 
+              ▶
 
-        <div class="progress">
-
-          <span id="currentTime">
-            0:00
-          </span>
-
-          <input
-            id="seek"
-            type="range"
-            min="0"
-            max="100"
-            value="0"
-          >
-
-          <span id="duration">
-            0:00
-          </span>
-
-        </div>
+            </button>
 
 
-        <div class="volume">
 
-          <span>
-            🔊
-          </span>
+            <button
+              id="nextBtn"
+              class="control"
+              title="Next Song"
+            >
 
-          <input
-            id="volume"
-            type="range"
-            min="0"
-            max="100"
-            value="80"
-          >
+              ⏭
+
+            </button>
+
+          </div>
+
+
+
+          <!-- PROGRESS -->
+
+          <div class="progress">
+
+
+            <span id="currentTime">
+              0:00
+            </span>
+
+
+            <input
+              id="seek"
+              type="range"
+              min="0"
+              max="100"
+              value="0"
+            >
+
+
+            <span id="duration">
+              0:00
+            </span>
+
+          </div>
+
+
+
+          <!-- VOLUME -->
+
+          <div class="volume">
+
+            <span>
+              🔊
+            </span>
+
+
+            <input
+              id="volume"
+              type="range"
+              min="0"
+              max="100"
+              value="80"
+            >
+
+          </div>
+
 
         </div>
 
       </div>
 
-    </div>
-
-  </section>
+    </section>
 
 
-  <!-- PLAYLIST -->
-
-  <section
-    id="playlist"
-    class="playlist-section"
-  >
-
-    <div class="section-heading playlist-heading">
-
-      <div>
-
-        <span class="eyebrow">
-          BEAST PLAYLIST
-        </span>
-
-        <h2>
-          Your Workout Playlist
-        </h2>
-
-      </div>
+  </main>
 
 
-      <input
-        id="search"
-        class="search"
-        type="text"
-        placeholder="Search songs..."
-      >
 
-    </div>
+  <!-- FOOTER -->
 
+  <footer>
 
-    <div
-      id="playlistList"
-      class="playlist-list"
-    >
+    GYM MUSIC • Built for your next PR
 
-      <div class="loading">
-        Loading playlist...
-      </div>
-
-    </div>
-
-  </section>
-
-</main>
+  </footer>
 
 
-<footer>
-  GYM MUSIC • Built for your next PR
-</footer>
+
+  <!-- YOUTUBE API -->
+
+  <script
+    src="https://www.youtube.com/iframe_api"
+  ></script>
 
 
-<script src="https://www.youtube.com/iframe_api"></script>
-<script src="app.js"></script>
+  <!-- YOUR JAVASCRIPT -->
+
+  <script src="app.js"></script>
+
 
 </body>
+
 </html>
